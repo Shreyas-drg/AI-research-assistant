@@ -16,7 +16,6 @@ const apiClient = axios.create({
 
 export interface PaperSummaryResponse {
   summary: string;
-  usedFallback?: boolean;
 }
 
 export interface ApiError {

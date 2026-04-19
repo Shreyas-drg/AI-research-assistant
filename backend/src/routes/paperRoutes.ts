@@ -23,11 +23,17 @@ const upload = multer({
 const getUserIdFromHeader = (req: Request): string | null => {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    console.log("⚠️  No Authorization header found");
     return null;
   }
 
   const token = authHeader.substring(7);
   const payload = verifyToken(token);
+  if (!payload) {
+    console.log("❌ Token verification failed");
+    return null;
+  }
+  console.log("✅ Token verified, userId:", payload.userId);
   return payload?.userId || null;
 };
 
@@ -99,6 +105,8 @@ router.post(
         const result = await papersCollection.insertOne(paper);
         paperId = result.insertedId.toString();
         console.log(`💾 Paper saved for user ${userId}: ${paperId}`);
+      } else {
+        console.log("⚠️  No authenticated user - paper NOT saved to database");
       }
 
       // Send response
@@ -146,6 +154,7 @@ router.get("/my-papers", async (req: Request, res: Response) => {
     const userId = getUserIdFromHeader(req);
 
     if (!userId) {
+      console.log("❌ No authenticated user for my-papers request");
       return res.status(HTTP_STATUS.BAD_REQUEST).json({
         error: "Authentication required",
       });
@@ -158,6 +167,8 @@ router.get("/my-papers", async (req: Request, res: Response) => {
       .find({ userId: new ObjectId(userId) })
       .sort({ createdAt: -1 })
       .toArray();
+
+    console.log(`📚 Retrieved ${papers.length} papers for user ${userId}`);
 
     res.json({
       message: "User papers retrieved",

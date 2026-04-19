@@ -103,7 +103,7 @@ export const ComparisonFileUpload: React.FC<ComparisonFileUploadProps> = ({
               {dragActive ? 'Drop your PDFs here' : 'Drop multiple PDFs or click to select'}
             </p>
             <p className="text-sm text-gray-500 mt-1">
-              Add up to 5 papers to compare side-by-side
+              Add up to 2 papers to compare side-by-side
             </p>
           </div>
         </div>

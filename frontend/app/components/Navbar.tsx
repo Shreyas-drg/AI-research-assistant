@@ -38,6 +38,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onAuthClick, isAuthenticated, us
                 <div className="absolute left-0 mt-2 w-56 bg-white text-gray-800 rounded-lg shadow-xl z-50 overflow-hidden">
                   <Link
                     href="/"
+                    onClick={() => setShowDropdown(false)}
                     className="flex items-center gap-3 px-4 py-3 hover:bg-indigo-50 hover:text-indigo-600 transition"
                   >
                     <span className="text-lg">📚</span>
@@ -50,7 +51,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onAuthClick, isAuthenticated, us
                   <div className="border-t border-gray-200"></div>
 
                   <Link
-                    href="/"
+                    href="/?view=papers"
+                    onClick={() => setShowDropdown(false)}
                     className="flex items-center gap-3 px-4 py-3 hover:bg-indigo-50 hover:text-indigo-600 transition"
                   >
                     <span className="text-lg">📄</span>
@@ -62,6 +64,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onAuthClick, isAuthenticated, us
 
                   <Link
                     href="/"
+                    onClick={() => setShowDropdown(false)}
                     className="flex items-center gap-3 px-4 py-3 hover:bg-indigo-50 hover:text-indigo-600 transition"
                   >
                     <span className="text-lg">⚙️</span>
@@ -73,6 +76,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onAuthClick, isAuthenticated, us
 
                   <Link
                     href="/"
+                    onClick={() => setShowDropdown(false)}
                     className="flex items-center gap-3 px-4 py-3 hover:bg-indigo-50 hover:text-indigo-600 transition"
                   >
                     <span className="text-lg">❓</span>
@@ -86,6 +90,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onAuthClick, isAuthenticated, us
 
                   <Link
                     href="/"
+                    onClick={() => setShowDropdown(false)}
                     className="flex items-center gap-3 px-4 py-3 hover:bg-indigo-50 hover:text-indigo-600 transition"
                   >
                     <span className="text-lg">📖</span>
@@ -125,7 +130,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onAuthClick, isAuthenticated, us
                   </div>
 
                   <Link
-                    href="/"
+                    href="/profile"
                     className="flex items-center gap-2 px-4 py-2 hover:bg-indigo-50 hover:text-indigo-600 transition text-sm"
                   >
                     <span>👤</span>
@@ -133,7 +138,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onAuthClick, isAuthenticated, us
                   </Link>
 
                   <Link
-                    href="/"
+                    href="/profile"
                     className="flex items-center gap-2 px-4 py-2 hover:bg-indigo-50 hover:text-indigo-600 transition text-sm"
                   >
                     <span>⚙️</span>

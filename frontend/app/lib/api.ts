@@ -37,20 +37,20 @@ export const uploadPaper = async (file: File, token?: string): Promise<PaperSumm
   formData.append('file', file);
 
   try {
-    const headers: any = {
-      'Content-Type': 'multipart/form-data',
-    };
+    const headers: any = {};
 
     // Add Authorization header if token is provided
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
     }
 
+    // Don't set Content-Type - let axios handle it automatically for FormData
     const response = await apiClient.post<PaperSummaryResponse>(
       '/api/paper/upload',
       formData,
       {
         headers,
+        transformRequest: [(data) => data], // Prevent axios from modifying FormData
       }
     );
 

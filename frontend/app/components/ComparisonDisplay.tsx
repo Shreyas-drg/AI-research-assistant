@@ -21,8 +21,18 @@ export const ComparisonDisplay: React.FC<ComparisonDisplayProps> = ({
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showFormatMenu, setShowFormatMenu] = useState(false);
+  const [copyFeedback, setCopyFeedback] = useState('');
 
   const totalMatches = papers.reduce((acc, paper) => acc + countMatches(paper.summary, searchTerm), 0);
+
+  const copyToClipboard = (): void => {
+    const allSummaries = papers
+      .map((paper) => `📄 ${paper.fileName}\n\n${paper.summary}`)
+      .join('\n\n' + '='.repeat(50) + '\n\n');
+    navigator.clipboard.writeText(allSummaries);
+    setCopyFeedback('✓ All papers copied to clipboard!');
+    setTimeout(() => setCopyFeedback(''), 3000);
+  };
 
   const handleDownloadFormat = (format: 'txt' | 'json' | 'html') => {
     switch (format) {
@@ -139,6 +149,13 @@ export const ComparisonDisplay: React.FC<ComparisonDisplayProps> = ({
 
       {/* Action Buttons */}
       <div className="flex gap-3 justify-center flex-wrap">
+        <button
+          onClick={copyToClipboard}
+          className="px-6 py-3 bg-gray-600 text-white rounded-lg font-semibold hover:bg-gray-700 transition flex items-center gap-2"
+        >
+          📋 Copy All
+        </button>
+
         {/* Download Format Dropdown */}
         <div className="relative overflow-visible">
           <button
@@ -187,6 +204,13 @@ export const ComparisonDisplay: React.FC<ComparisonDisplayProps> = ({
           <strong>💡 Tip:</strong> You can now view all {papers.length} papers side-by-side. Use the download button to save the comparison.
         </p>
       </div>
+
+      {/* Copy Feedback */}
+      {copyFeedback && (
+        <div className="fixed bottom-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg animate-bounce">
+          {copyFeedback}
+        </div>
+      )}
     </div>
   );
 };

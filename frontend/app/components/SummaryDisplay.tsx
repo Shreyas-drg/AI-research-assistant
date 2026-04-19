@@ -20,6 +20,7 @@ interface SummaryDisplayProps {
 export const SummaryDisplay: React.FC<SummaryDisplayProps> = ({ summary, fileName, onReset }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showFormatMenu, setShowFormatMenu] = useState(false);
+  const [copyFeedback, setCopyFeedback] = useState('');
   const sections = summary.split('\n\n').filter((s: string) => s.trim());
 
   const matchCount = countMatches(summary, searchTerm);
@@ -27,7 +28,8 @@ export const SummaryDisplay: React.FC<SummaryDisplayProps> = ({ summary, fileNam
 
   const copyToClipboard = (): void => {
     navigator.clipboard.writeText(summary);
-    alert('Summary copied to clipboard!');
+    setCopyFeedback('✓ Summary copied to clipboard!');
+    setTimeout(() => setCopyFeedback(''), 3000);
   };
 
   const handleDownloadFormat = (format: 'txt' | 'md' | 'json' | 'csv' | 'html') => {
@@ -200,6 +202,13 @@ export const SummaryDisplay: React.FC<SummaryDisplayProps> = ({ summary, fileNam
           ➕ Upload Another
         </button>
       </div>
+
+      {/* Copy Feedback */}
+      {copyFeedback && (
+        <div className="fixed bottom-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg animate-bounce">
+          {copyFeedback}
+        </div>
+      )}
     </div>
   );
 };

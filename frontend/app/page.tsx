@@ -3,14 +3,31 @@
 import { useState, useEffect } from 'react';
 import { FileUpload } from './components/FileUpload';
 import { SummaryDisplay } from './components/SummaryDisplay';
+import { ComparisonFileUpload } from './components/ComparisonFileUpload';
+import { ComparisonDisplay } from './components/ComparisonDisplay';
+import { Navbar } from './components/Navbar';
+import { AuthModal } from './components/AuthModal';
 import { uploadPaper, healthCheck } from './lib/api';
 
+type Mode = 'single' | 'compare';
+
+interface PaperSummary {
+  fileName: string;
+  summary: string;
+}
+
 export default function Home() {
+  const [mode, setMode] = useState<Mode>('single');
   const [summary, setSummary] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [apiConnected, setApiConnected] = useState(false);
+  const [comparePapers, setComparePapers] = useState<PaperSummary[]>([]);
+  const [compareProgress, setCompareProgress] = useState(0);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userEmail, setUserEmail] = useState('');
 
   useEffect(() => {
     const checkApi = async () => {
@@ -18,6 +35,14 @@ export default function Home() {
       setApiConnected(isConnected);
     };
     checkApi();
+
+    // Check if user is already logged in
+    const savedToken = localStorage.getItem('authToken');
+    const savedEmail = localStorage.getItem('userEmail');
+    if (savedToken && savedEmail) {
+      setIsAuthenticated(true);
+      setUserEmail(savedEmail);
+    }
   }, []);
 
   const handleFileSelect = async (file: File) => {
@@ -27,7 +52,8 @@ export default function Home() {
 
     try {
       setFileName(file.name);
-      const result = await uploadPaper(file);
+      const token = localStorage.getItem('authToken') || undefined;
+      const result = await uploadPaper(file, token);
       setSummary(result.summary);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to process file';
@@ -38,24 +64,85 @@ export default function Home() {
     }
   };
 
+  const handleCompareFilesSelect = async (files: File[]) => {
+    if (files.length === 0) {
+      setComparePapers([]);
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+    setComparePapers([]);
+    setCompareProgress(0);
+
+    const results: PaperSummary[] = [];
+    const token = localStorage.getItem('authToken') || undefined;
+
+    for (let i = 0; i < files.length; i++) {
+      try {
+        setCompareProgress(Math.round(((i) / files.length) * 100));
+        const result = await uploadPaper(files[i], token);
+        results.push({
+          fileName: files[i].name,
+          summary: result.summary,
+        });
+        setComparePapers([...results]);
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : `Failed to process ${files[i].name}`;
+        setError(errorMessage);
+        console.error('Upload error:', err);
+      }
+    }
+
+    setCompareProgress(100);
+    setIsLoading(false);
+  };
+
   const handleReset = () => {
     setSummary(null);
     setFileName('');
     setError(null);
   };
 
+  const handleCompareReset = () => {
+    setComparePapers([]);
+    setCompareProgress(0);
+    setError(null);
+  };
+
+  const switchMode = (newMode: Mode) => {
+    setMode(newMode);
+    handleReset();
+    handleCompareReset();
+  };
+
   return (
-    <main className="relative flex min-h-screen items-center justify-center overflow-hidden py-5 perspective-[1200px]">
-      <div
-        className="pointer-events-none absolute -left-20 -top-[70px] h-80 w-80 animate-float-blob rounded-full bg-indigo-500/35 blur-[55px] motion-reduce:hidden"
-        aria-hidden
+    <>
+      <Navbar 
+        onAuthClick={() => setShowAuthModal(true)}
+        isAuthenticated={isAuthenticated}
+        userEmail={userEmail}
       />
-      <div
-        className="pointer-events-none absolute -bottom-[90px] -right-[90px] h-80 w-80 animate-float-blob rounded-full bg-sky-400/28 blur-[55px] [animation-delay:1.8s] motion-reduce:hidden"
-        aria-hidden
+      <AuthModal 
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onSuccess={(email) => {
+          setIsAuthenticated(true);
+          setUserEmail(email);
+        }}
       />
 
-      <div className="relative z-10 w-full max-w-[900px] px-1">
+      <main className="relative flex min-h-screen items-center justify-center overflow-hidden py-5 perspective-[1200px] pt-32">
+        <div
+          className="pointer-events-none absolute -left-20 -top-[70px] h-80 w-80 animate-float-blob rounded-full bg-indigo-500/35 blur-[55px] motion-reduce:hidden"
+          aria-hidden
+        />
+        <div
+          className="pointer-events-none absolute -bottom-[90px] -right-[90px] h-80 w-80 animate-float-blob rounded-full bg-sky-400/28 blur-[55px] [animation-delay:1.8s] motion-reduce:hidden"
+          aria-hidden
+        />
+
+        <div className="relative z-10 w-full max-w-[900px] px-1">
         <header className="mb-10 flex flex-col items-center gap-5 text-center text-white md:mb-12">
           <div className="flex-1">
             <h1 className="mb-3 text-2xl font-extrabold tracking-tight [text-shadow:0_2px_4px_rgba(0,0,0,0.1)] sm:text-3xl md:text-[42px] md:leading-tight">
@@ -76,35 +163,102 @@ export default function Home() {
               {apiConnected ? '🟢 Connected' : '🔴 Disconnected'}
             </span>
           </div>
+
+          {/* Mode Toggle */}
+          <div className="flex gap-3 bg-white/10 rounded-full p-1 backdrop-blur-md">
+            <button
+              onClick={() => switchMode('single')}
+              className={`px-6 py-2 rounded-full font-semibold transition ${
+                mode === 'single'
+                  ? 'bg-white text-indigo-600 shadow-lg'
+                  : 'text-white hover:bg-white/20'
+              }`}
+            >
+              📄 Single Paper
+            </button>
+            <button
+              onClick={() => switchMode('compare')}
+              className={`px-6 py-2 rounded-full font-semibold transition ${
+                mode === 'compare'
+                  ? 'bg-white text-indigo-600 shadow-lg'
+                  : 'text-white hover:bg-white/20'
+              }`}
+            >
+              📊 Compare Papers
+            </button>
+          </div>
         </header>
 
         <div className="flex animate-fade-in flex-col gap-8 md:gap-8">
-          {summary ? (
-            <SummaryDisplay summary={summary} fileName={fileName} onReset={handleReset} />
-          ) : (
+          {/* Single Mode */}
+          {mode === 'single' && (
             <>
-              <FileUpload
-                onFileSelect={handleFileSelect}
-                isLoading={isLoading}
-                disabled={!apiConnected}
-              />
+              {summary ? (
+                <SummaryDisplay summary={summary} fileName={fileName} onReset={handleReset} />
+              ) : (
+                <>
+                  <FileUpload
+                    onFileSelect={handleFileSelect}
+                    isLoading={isLoading}
+                    disabled={!apiConnected}
+                  />
 
-              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                {[
-                  { icon: '⚡', title: 'Fast Processing', text: 'Get summaries in seconds, not hours' },
-                  { icon: '🎯', title: 'Key Points', text: 'Capture the essential findings and conclusions' },
-                  { icon: '📖', title: 'Easy to Read', text: 'Structured format with TL;DR and citations' },
-                ].map((card) => (
-                  <div
-                    key={card.title}
-                    className="rounded-xl bg-white p-6 text-center shadow-md transition duration-300 hover:-translate-y-2 hover:shadow-xl"
-                  >
-                    <span className="mb-3 block text-3xl">{card.icon}</span>
-                    <h3 className="mb-2 text-base font-bold text-gray-800">{card.title}</h3>
-                    <p className="text-sm leading-relaxed text-gray-500">{card.text}</p>
+                  <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                    {[
+                      { icon: '⚡', title: 'Fast Processing', text: 'Get summaries in seconds, not hours' },
+                      { icon: '🎯', title: 'Key Points', text: 'Capture the essential findings and conclusions' },
+                      { icon: '📖', title: 'Easy to Read', text: 'Structured format with TL;DR and citations' },
+                    ].map((card) => (
+                      <div
+                        key={card.title}
+                        className="rounded-xl bg-white p-6 text-center shadow-md transition duration-300 hover:-translate-y-2 hover:shadow-xl"
+                      >
+                        <span className="mb-3 block text-3xl">{card.icon}</span>
+                        <h3 className="mb-2 text-base font-bold text-gray-800">{card.title}</h3>
+                        <p className="text-sm leading-relaxed text-gray-500">{card.text}</p>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                </>
+              )}
+            </>
+          )}
+
+          {/* Compare Mode */}
+          {mode === 'compare' && (
+            <>
+              {comparePapers.length > 0 ? (
+                <ComparisonDisplay papers={comparePapers} onReset={handleCompareReset} />
+              ) : (
+                <>
+                  <ComparisonFileUpload
+                    onFilesSelect={handleCompareFilesSelect}
+                    isLoading={isLoading}
+                    disabled={!apiConnected}
+                  />
+
+                  {isLoading && compareProgress > 0 && (
+                    <div className="rounded-lg bg-white p-6 shadow-lg">
+                      <div className="flex items-center justify-between mb-3">
+                        <p className="font-semibold text-gray-800">Processing Papers...</p>
+                        <span className="text-sm text-gray-600">{compareProgress}%</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div
+                          className="bg-indigo-600 h-2 rounded-full transition-all duration-300"
+                          style={{ width: `${compareProgress}%` }}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="rounded-lg bg-indigo-50 border border-indigo-200 p-4">
+                    <p className="text-sm text-indigo-800">
+                      <strong>💡 Comparison Mode:</strong> Upload multiple research papers to view their summaries side-by-side. Perfect for comparing methodologies, findings, and conclusions across different papers!
+                    </p>
+                  </div>
+                </>
+              )}
             </>
           )}
         </div>
@@ -117,6 +271,11 @@ export default function Home() {
             <div className="min-w-0 flex-1">
               <h4 className="text-sm font-semibold text-red-800">Error Processing File</h4>
               <p className="text-[13px] leading-snug text-red-900">{error}</p>
+              {(error.includes('rate') || error.includes('Rate')) && (
+                <p className="mt-2 text-xs text-red-800 font-medium">
+                  💡 Tip: Please wait a moment before trying again. The system spaces out requests to work within API limits.
+                </p>
+              )}
             </div>
             <button
               type="button"
@@ -129,7 +288,7 @@ export default function Home() {
           </div>
         )}
 
-        {!apiConnected && !summary && (
+        {!apiConnected && !summary && comparePapers.length === 0 && (
           <div className="animate-slide-down mt-6 flex items-start gap-3 rounded-lg border border-amber-300 bg-amber-100 p-4">
             <span className="shrink-0 text-xl" aria-hidden>
               🔗
@@ -159,7 +318,8 @@ export default function Home() {
             </a>
           </p>
         </footer>
-      </div>
-    </main>
+        </div>
+      </main>
+    </>
   );
 }

@@ -51,6 +51,34 @@ This will:
 
 ## 🔍 Verify Setup
 
+### Prerequisites
+1. **Node.js** (v16+)
+2. **MongoDB Atlas** account (free tier available)
+3. **Ollama** running on localhost:11434
+
+### Environment Variables Setup
+
+**Backend Configuration:**
+1. Create `backend/.env` file:
+   ```bash
+   cp backend/.env.example backend/.env
+   ```
+2. Update values in `backend/.env`:
+   - `MONGODB_URI` - Get from MongoDB Atlas
+   - `JWT_SECRET` - Generate a random string
+   - `OLLAMA_API_URL` - Should be `http://localhost:11434`
+
+### MongoDB Atlas Setup
+
+For detailed MongoDB Atlas setup instructions, see [MONGODB_SETUP.md](./backend/MONGODB_SETUP.md)
+
+Quick steps:
+1. Create free cluster on MongoDB Atlas
+2. Create database user with strong password
+3. Add your IP to Network Access (or allow all for dev)
+4. Copy connection string
+5. Replace credentials in `.env` file
+
 ### Check Backend
 ```bash
 # In new terminal
@@ -64,11 +92,24 @@ curl http://localhost:5000
 }
 ```
 
+### Check MongoDB Connection
+```bash
+# Start backend server
+cd backend
+npm run dev
+
+# Should see in logs:
+# ✅ Connected to MongoDB Atlas
+# ✅ Database indexes created
+# 🚀 Server running on port 5000
+```
+
 ### Check Frontend
 Open http://localhost:3000 in browser. You should see:
 - Title: "AI Research Paper Summarizer"
 - Upload area with gradient background
 - "🟢 Connected" status indicator
+- Login/Sign Up button in navbar
 
 ## 🧪 Test Upload
 

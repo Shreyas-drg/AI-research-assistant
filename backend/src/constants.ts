@@ -7,12 +7,12 @@ export const FILE_UPLOAD = {
 
 // API constraints
 export const API = {
-  MAX_TEXT_LENGTH: 8000, // Characters to send to OpenAI
-  TIMEOUT: 30000, // 30 seconds
-  MODEL: "gpt-4o-mini",
+  MAX_TEXT_LENGTH: 4000, // Reduced from 8000 to prevent Ollama crashes
+  TIMEOUT: 120000, // 120 seconds (Ollama might be slower on first run)
+  MODEL: "mistral", // Using Ollama's Mistral model
   TEMPERATURE: 0.7,
-  MAX_TOKENS: 1500,
-  RETRY_ATTEMPTS: 3,
+  MAX_TOKENS: 2000, // Ollama allows more tokens
+  RETRY_ATTEMPTS: 2,
   RETRY_BASE_DELAY_MS: 1000,
 };
 
@@ -33,11 +33,11 @@ export const ERROR_MESSAGES = {
   EMPTY_FILE: "File is empty",
   NO_TEXT_IN_PDF: "PDF contains no readable text",
   FILE_TOO_LARGE: "File size exceeds 50MB limit",
-  INVALID_API_KEY: "Authentication failed with OpenAI",
-  RATE_LIMITED: "Rate limited by OpenAI - please try again later",
-  SERVICE_UNAVAILABLE: "OpenAI service is currently unavailable",
+  INVALID_API_KEY: "Ollama is not running on localhost:11434",
+  RATE_LIMITED: "Ollama is processing another request, please try again in a moment",
+  SERVICE_UNAVAILABLE: "Ollama service is currently unavailable. Make sure it's running.",
   GENERIC_ERROR: "Error processing file",
-  MISSING_API_KEY: "OPENAI_API_KEY is not configured",
+  MISSING_API_KEY: "OLLAMA_API_URL is not configured",
 };
 
 // Success messages

@@ -2,6 +2,8 @@ import express, { Application, Request, Response, ErrorRequestHandler } from "ex
 import cors from "cors";
 import dotenv from "dotenv";
 import paperRoutes from "./routes/paperRoutes";
+import authRoutes from "./routes/authRoutes";
+import { connectDB } from "./db/mongodb";
 import { logger, validateEnv } from "./utils/helpers";
 import { HTTP_STATUS } from "./constants";
 
@@ -9,7 +11,8 @@ dotenv.config();
 
 // Validate required environment variables
 try {
-  validateEnv("OPENAI_API_KEY");
+  validateEnv("OLLAMA_API_URL");
+  validateEnv("MONGODB_URI");
 } catch (error) {
   console.error("❌ Configuration Error:", error instanceof Error ? error.message : error);
   process.exit(1);
@@ -29,6 +32,7 @@ app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
 // Routes
+app.use("/api/auth", authRoutes);
 app.use("/api/paper", paperRoutes);
 
 // Health check
@@ -56,7 +60,21 @@ app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📝 Environment: ${process.env.NODE_ENV || "development"}`);
-});
+// Start server with DB connection
+const startServer = async () => {
+  try {
+    // Connect to MongoDB
+    await connectDB();
+    console.log("✅ Database connected");
+
+    app.listen(PORT, () => {
+      console.log(`🚀 Server running on port ${PORT}`);
+      console.log(`📝 Environment: ${process.env.NODE_ENV || "development"}`);
+    });
+  } catch (error) {
+    console.error("❌ Failed to start server:", error);
+    process.exit(1);
+  }
+};
+
+startServer();

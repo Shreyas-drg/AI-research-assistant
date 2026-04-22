@@ -5,17 +5,10 @@ import { useRouter } from 'next/navigation';
 import { Navbar } from '../components/Navbar';
 import { getUserPapers } from '../lib/api';
 
-interface UserData {
-  email: string;
-  name?: string;
-  createdAt?: Date;
-}
-
 export default function ProfilePage() {
   const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userEmail, setUserEmail] = useState('');
-  const [userData, setUserData] = useState<UserData | null>(null);
   const [paperCount, setPaperCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -31,7 +24,6 @@ export default function ProfilePage() {
 
     setIsAuthenticated(true);
     setUserEmail(email);
-    setUserData({ email });
 
     // Fetch user papers
     fetchUserData(token);

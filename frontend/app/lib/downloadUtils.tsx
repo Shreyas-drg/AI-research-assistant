@@ -1,7 +1,3 @@
-interface DownloadFormats {
-  type: 'txt' | 'md' | 'json' | 'csv' | 'html';
-}
-
 /**
  * Download summary in TXT format
  */

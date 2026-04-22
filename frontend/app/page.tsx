@@ -181,7 +181,7 @@ export default function Home() {
           <header className="mb-10 flex flex-col items-center gap-5 text-center text-white md:mb-12">
             <div className="flex-1">
               <h1 className="mb-3 text-2xl font-extrabold tracking-tight [text-shadow:0_2px_4px_rgba(0,0,0,0.1)] sm:text-3xl md:text-[42px] md:leading-tight">
-                📚 AI Research Paper Summarizer
+                SYNA AI 
               </h1>
               <p className="mx-auto max-w-[600px] text-base font-light opacity-95 sm:text-lg">
                 Transform long research papers into concise, actionable summaries in seconds

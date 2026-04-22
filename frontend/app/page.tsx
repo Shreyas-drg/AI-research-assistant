@@ -10,6 +10,8 @@ import { Navbar } from './components/Navbar';
 import { AuthModal } from './components/AuthModal';
 import { uploadPaper, healthCheck, getUserPapers } from './lib/api';
 
+export const dynamic = 'force-dynamic';
+
 type Mode = 'single' | 'compare';
 
 interface PaperSummary {
@@ -44,8 +46,13 @@ export default function Home() {
 
   useEffect(() => {
     const checkApi = async () => {
-      const isConnected = await healthCheck();
-      setApiConnected(isConnected);
+      try {
+        const isConnected = await healthCheck();
+        setApiConnected(isConnected);
+      } catch (err) {
+        console.error('Health check failed:', err);
+        setApiConnected(false);
+      }
     };
     checkApi();
 

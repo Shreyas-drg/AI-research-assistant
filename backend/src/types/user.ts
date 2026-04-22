@@ -6,6 +6,7 @@ export interface User {
   password: string;
   name?: string;
   avatar?: string;
+  isAdmin: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -15,6 +16,7 @@ export interface UserResponse {
   email: string;
   name?: string;
   avatar?: string;
+  isAdmin: boolean;
   createdAt: Date;
 }
 

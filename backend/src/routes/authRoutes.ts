@@ -60,6 +60,7 @@ router.post("/register", async (req: Request, res: Response) => {
       email,
       password: hashedPassword,
       name: name || email.split("@")[0],
+      isAdmin: false,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -73,6 +74,7 @@ router.post("/register", async (req: Request, res: Response) => {
       _id: result.insertedId.toString(),
       email: newUser.email,
       name: newUser.name,
+      isAdmin: newUser.isAdmin,
       createdAt: newUser.createdAt,
     };
 
@@ -134,6 +136,7 @@ router.post("/login", async (req: Request, res: Response) => {
       _id: user._id!.toString(),
       email: user.email,
       name: user.name,
+      isAdmin: user.isAdmin,
       createdAt: user.createdAt,
     };
 
@@ -192,6 +195,7 @@ router.post("/verify", async (req: Request, res: Response) => {
       _id: user._id!.toString(),
       email: user.email,
       name: user.name,
+      isAdmin: user.isAdmin,
       createdAt: user.createdAt,
     };
 
@@ -245,6 +249,7 @@ router.get("/profile", async (req: Request, res: Response) => {
       _id: user._id!.toString(),
       email: user.email,
       name: user.name,
+      isAdmin: user.isAdmin,
       createdAt: user.createdAt,
     };
 

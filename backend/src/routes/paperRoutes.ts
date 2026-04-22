@@ -95,11 +95,13 @@ router.post(
         const papersCollection = db.collection("papers");
 
         const paper = {
+          type: "single",
           userId: new ObjectId(userId),
           fileName: req.file.originalname || "document.pdf",
           fileHash,
           summary,
           createdAt: new Date(),
+          updatedAt: new Date(),
         };
 
         const result = await papersCollection.insertOne(paper);
@@ -146,6 +148,85 @@ router.post(
 );
 
 /**
+ * POST /api/paper/save-comparison
+ * Save multiple compared papers as a single comparison document
+ * Body: {
+ *   comparisonName: "string",
+ *   papers: [
+ *     { fileName: "string", fileHash: "string", summary: "string" },
+ *     { fileName: "string", fileHash: "string", summary: "string" }
+ *   ],
+ *   comparisonSummary?: "string"
+ * }
+ */
+router.post("/save-comparison", async (req: Request, res: Response) => {
+  try {
+    const userId = getUserIdFromHeader(req);
+
+    if (!userId) {
+      console.log("❌ No authenticated user for comparison save");
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
+        error: "Authentication required",
+      });
+    }
+
+    const { comparisonName, papers, comparisonSummary } = req.body;
+
+    // Validation
+    if (!comparisonName || !papers || !Array.isArray(papers) || papers.length === 0) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
+        error: "comparisonName and papers array are required",
+      });
+    }
+
+    if (papers.length < 2) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
+        error: "At least 2 papers are required for comparison",
+      });
+    }
+
+    // Validate each paper
+    for (const paper of papers) {
+      if (!paper.fileName || !paper.fileHash || !paper.summary) {
+        return res.status(HTTP_STATUS.BAD_REQUEST).json({
+          error: "Each paper must have fileName, fileHash, and summary",
+        });
+      }
+    }
+
+    const db = getDB();
+    const papersCollection = db.collection("papers");
+
+    const comparisonDoc = {
+      type: "comparison",
+      userId: new ObjectId(userId),
+      comparisonName,
+      papers,
+      comparisonSummary: comparisonSummary || "",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    const result = await papersCollection.insertOne(comparisonDoc);
+    const comparisonId = result.insertedId.toString();
+
+    console.log(`📊 Comparison saved for user ${userId}: ${comparisonId} (${papers.length} papers)`);
+
+    res.json({
+      message: "Comparison saved successfully",
+      comparisonId,
+      paperCount: papers.length,
+      comparisonName,
+    });
+  } catch (error) {
+    console.error("Save comparison error:", error);
+    res.status(HTTP_STATUS.INTERNAL_ERROR).json({
+      error: "Failed to save comparison",
+    });
+  }
+});
+
+/**
  * GET /api/paper/my-papers
  * Get all papers uploaded by the authenticated user
  */
@@ -173,12 +254,29 @@ router.get("/my-papers", async (req: Request, res: Response) => {
     res.json({
       message: "User papers retrieved",
       count: papers.length,
-      data: papers.map((paper: any) => ({
-        id: paper._id.toString(),
-        fileName: paper.fileName,
-        summary: paper.summary,
-        createdAt: paper.createdAt,
-      })),
+      data: papers.map((paper: any) => {
+        // Handle both single papers and comparison documents
+        if (paper.type === "comparison") {
+          return {
+            id: paper._id.toString(),
+            type: "comparison",
+            comparisonName: paper.comparisonName,
+            paperCount: paper.papers.length,
+            papers: paper.papers,
+            comparisonSummary: paper.comparisonSummary,
+            createdAt: paper.createdAt,
+          };
+        } else {
+          // Single paper (type: "single")
+          return {
+            id: paper._id.toString(),
+            type: "single",
+            fileName: paper.fileName,
+            summary: paper.summary,
+            createdAt: paper.createdAt,
+          };
+        }
+      }),
     });
   } catch (error) {
     console.error("Get papers error:", error);

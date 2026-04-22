@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
 import { FileUpload } from './components/FileUpload';
 import { SummaryDisplay } from './components/SummaryDisplay';
 import { ComparisonFileUpload } from './components/ComparisonFileUpload';
@@ -27,7 +26,6 @@ interface SavedPaper {
 }
 
 export default function Home() {
-  const searchParams = useSearchParams();
   const [mode, setMode] = useState<Mode>('single');
   const [view, setView] = useState<'home' | 'papers'>('home');
   const [summary, setSummary] = useState<string | null>(null);
@@ -64,14 +62,17 @@ export default function Home() {
       setUserEmail(savedEmailLocal);
     }
 
-    // Check if viewing papers
-    if (searchParams?.get('view') === 'papers') {
-      setView('papers');
-      if (savedToken) {
-        loadUserPapers(savedToken);
+    // Check if viewing papers - using URLSearchParams from window
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('view') === 'papers') {
+        setView('papers');
+        if (savedToken) {
+          loadUserPapers(savedToken);
+        }
       }
     }
-  }, [searchParams]);
+  }, []);
 
   const loadUserPapers = async (token: string) => {
     setPapersLoading(true);

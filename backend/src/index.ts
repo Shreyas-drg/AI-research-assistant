@@ -40,6 +40,10 @@ app.get("/", (req: Request, res: Response) => {
   res.json({ message: "API Running...", status: "ok", timestamp: new Date() });
 });
 
+app.get("/api/health", (req: Request, res: Response) => {
+  res.json({ status: "ok" });
+});
+
 // 404 handler
 app.use((req: Request, res: Response) => {
   res.status(HTTP_STATUS.NOT_FOUND).json({ error: "Route not found" });

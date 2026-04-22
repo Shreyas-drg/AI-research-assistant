@@ -1,10 +1,5 @@
 import React from 'react';
 
-interface SearchMatch {
-  text: string;
-  isMatch: boolean;
-}
-
 /**
  * Highlights search matches in text
  */

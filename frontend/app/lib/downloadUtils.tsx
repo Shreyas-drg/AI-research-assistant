@@ -1,5 +1,3 @@
-import React from 'react';
-
 interface DownloadFormats {
   type: 'txt' | 'md' | 'json' | 'csv' | 'html';
 }

@@ -82,11 +82,7 @@ ${limitedText}`,
         const statusCode = error.response?.status;
         const errorData = error.response?.data;
 
-        console.error("Groq Response Error:", {
-          status: statusCode,
-          data: errorData,
-          message: error.message,
-        });
+        console.error("🔴 Groq API Full Response Error:", JSON.stringify(errorData, null, 2));
 
         if (statusCode === 401) {
           console.error("❌ Groq Auth Error: Invalid API key");
@@ -111,14 +107,15 @@ ${limitedText}`,
         }
 
         if (statusCode === 400) {
-          console.error("❌ Groq 400 Bad Request. Check request format and API key.");
-          console.error("Error details:", errorData);
+          console.error("❌ Groq 400 Bad Request");
+          console.error("Full error:", JSON.stringify(errorData, null, 2));
           if (attempt < API.RETRY_ATTEMPTS) {
             const delay = API.RETRY_BASE_DELAY_MS * Math.pow(2, attempt - 1);
             console.warn(`Retrying in ${delay}ms...`);
             await sleep(delay);
             continue;
           }
+          throw new Error(`Groq API Error: ${errorData?.error?.message || "Unknown error"}`);
         }
 
         console.error("❌ Groq API Error:", statusCode, error.message);

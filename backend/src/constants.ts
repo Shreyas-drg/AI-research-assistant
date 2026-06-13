@@ -9,7 +9,7 @@ export const FILE_UPLOAD = {
 export const API = {
   MAX_TEXT_LENGTH: 3000, // Reduce to prevent HTML entity issues
   TIMEOUT: 120000, // 120 seconds
-  MODEL: "mistral-7b-instant", // Using Groq's reliable Mistral model
+  MODEL: "llama-3.1-70b-versatile", // Using Groq's free tier model
   TEMPERATURE: 0.7,
   MAX_TOKENS: 1200, // Groq is very fast
   RETRY_ATTEMPTS: 3,

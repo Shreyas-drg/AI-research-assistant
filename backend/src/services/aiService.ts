@@ -21,8 +21,18 @@ export const summarizeText = async (text: string): Promise<string> => {
     return cachedSummary;
   }
 
+  // Sanitize text - remove HTML entities and special characters
+  let sanitizedText = text
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\x00/g, "") // Remove null bytes
+    .trim();
+
   // Limit text for performance
-  const limitedText = text.slice(0, API.MAX_TEXT_LENGTH);
+  const limitedText = sanitizedText.slice(0, API.MAX_TEXT_LENGTH);
 
   for (let attempt = 1; attempt <= API.RETRY_ATTEMPTS; attempt++) {
     try {
@@ -70,6 +80,13 @@ ${limitedText}`,
     } catch (error) {
       if (axios.isAxiosError(error)) {
         const statusCode = error.response?.status;
+        const errorData = error.response?.data;
+
+        console.error("Groq Response Error:", {
+          status: statusCode,
+          data: errorData,
+          message: error.message,
+        });
 
         if (statusCode === 401) {
           console.error("❌ Groq Auth Error: Invalid API key");
@@ -77,8 +94,8 @@ ${limitedText}`,
         }
 
         if (statusCode === 404) {
-          console.error("❌ Groq model not found");
-          throw new Error("Groq model not found");
+          console.error("❌ Groq model not found. Check if model name is correct.");
+          throw new Error("Groq model not found. Try using mistral-7b-instant");
         }
 
         if (statusCode === 429 || error.message.includes("too many requests")) {
@@ -88,9 +105,20 @@ ${limitedText}`,
           }
 
           const delay = API.RETRY_BASE_DELAY_MS * Math.pow(2, attempt - 1);
-          console.warn(`Groq rate limited. Retrying in ${delay}ms...`);
+          console.warn(`⏳ Groq rate limited. Retrying in ${delay}ms...`);
           await sleep(delay);
           continue;
+        }
+
+        if (statusCode === 400) {
+          console.error("❌ Groq 400 Bad Request. Check request format and API key.");
+          console.error("Error details:", errorData);
+          if (attempt < API.RETRY_ATTEMPTS) {
+            const delay = API.RETRY_BASE_DELAY_MS * Math.pow(2, attempt - 1);
+            console.warn(`Retrying in ${delay}ms...`);
+            await sleep(delay);
+            continue;
+          }
         }
 
         console.error("❌ Groq API Error:", statusCode, error.message);

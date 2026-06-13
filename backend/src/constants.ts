@@ -7,13 +7,13 @@ export const FILE_UPLOAD = {
 
 // API constraints
 export const API = {
-  MAX_TEXT_LENGTH: 4000, // Limit text for better summarization
+  MAX_TEXT_LENGTH: 3000, // Reduce to prevent HTML entity issues
   TIMEOUT: 120000, // 120 seconds
-  MODEL: "mixtral-8x7b-32768", // Using Groq's fastest open-source model
+  MODEL: "mistral-7b-instant", // Using Groq's reliable Mistral model
   TEMPERATURE: 0.7,
-  MAX_TOKENS: 1500, // Groq is very fast
-  RETRY_ATTEMPTS: 2,
-  RETRY_BASE_DELAY_MS: 1000,
+  MAX_TOKENS: 1200, // Groq is very fast
+  RETRY_ATTEMPTS: 3,
+  RETRY_BASE_DELAY_MS: 2000,
 };
 
 // HTTP Status codes

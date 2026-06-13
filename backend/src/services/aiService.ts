@@ -10,12 +10,12 @@ export const summarizeText = async (text: string): Promise<string> => {
     throw new Error("Text cannot be empty");
   }
 
-  const ollamaUrl = process.env.OLLAMA_API_URL;
-  if (!ollamaUrl) {
+  const groqApiKey = process.env.GROQ_API_KEY;
+  if (!groqApiKey) {
     throw new Error(ERROR_MESSAGES.MISSING_API_KEY);
   }
 
-  // Check cache first (saves processing time!)
+  // Check cache first (saves processing time and tokens!)
   const cachedSummary = getCachedSummary(text);
   if (cachedSummary) {
     return cachedSummary;
@@ -26,32 +26,40 @@ export const summarizeText = async (text: string): Promise<string> => {
 
   for (let attempt = 1; attempt <= API.RETRY_ATTEMPTS; attempt++) {
     try {
-      console.log(`🤖 Calling Ollama (${API.MODEL}) - attempt ${attempt}...`);
+      console.log(`🤖 Calling Groq (${API.MODEL}) - attempt ${attempt}...`);
 
       const response = await axios.post(
-        `${ollamaUrl}/api/generate`,
+        "https://api.groq.com/openai/v1/chat/completions",
         {
           model: API.MODEL,
-          prompt: `Summarize this research paper concisely:
+          messages: [
+            {
+              role: "user",
+              content: `Summarize this research paper concisely:
 - Main idea
 - Key findings
 - Conclusion
 
 Paper:
 ${limitedText}`,
-          stream: false,
+            },
+          ],
           temperature: API.TEMPERATURE,
-          num_predict: API.MAX_TOKENS,
+          max_tokens: API.MAX_TOKENS,
         },
         {
+          headers: {
+            Authorization: `Bearer ${groqApiKey}`,
+            "Content-Type": "application/json",
+          },
           timeout: API.TIMEOUT,
         }
       );
 
-      const content = response.data?.response?.trim();
+      const content = response.data?.choices?.[0]?.message?.content?.trim();
 
       if (!content) {
-        throw new Error("No response from Ollama");
+        throw new Error("No response from Groq");
       }
 
       // Cache the summary for future requests
@@ -64,30 +72,30 @@ ${limitedText}`,
         const statusCode = error.response?.status;
 
         if (statusCode === 401) {
-          console.error("OpenAI Auth Error: Invalid API key");
+          console.error("❌ Groq Auth Error: Invalid API key");
           throw new Error(ERROR_MESSAGES.INVALID_API_KEY);
         }
 
-        if (statusCode === 404 || error.message.includes("ECONNREFUSED")) {
-          console.error("❌ Ollama not running on localhost:11434");
-          throw new Error(ERROR_MESSAGES.SERVICE_UNAVAILABLE);
+        if (statusCode === 404) {
+          console.error("❌ Groq model not found");
+          throw new Error("Groq model not found");
         }
 
         if (statusCode === 429 || error.message.includes("too many requests")) {
           if (attempt === API.RETRY_ATTEMPTS) {
-            console.error("Ollama: exceeded retries");
+            console.error("❌ Groq: Rate limit exceeded");
             throw new Error(ERROR_MESSAGES.RATE_LIMITED);
           }
 
           const delay = API.RETRY_BASE_DELAY_MS * Math.pow(2, attempt - 1);
-          console.warn(`Ollama busy. Retrying in ${delay}ms...`);
+          console.warn(`Groq rate limited. Retrying in ${delay}ms...`);
           await sleep(delay);
           continue;
         }
 
-        console.error("API Error:", statusCode, error.message);
+        console.error("❌ Groq API Error:", statusCode, error.message);
       } else if (error instanceof Error) {
-        console.error("Error:", error.message);
+        console.error("❌ Error:", error.message);
       }
 
       throw error;
